@@ -4,9 +4,6 @@
 
 TeleCompass is a comprehensive SaaS application that ingests state telehealth policy PDFs, extracts structured facts, and provides intelligent search, Q&A, comparison, and dashboard features for healthcare compliance professionals.
 
-
-
-
 ## Snapshots
 
 ![alt text](image.png)
@@ -208,13 +205,11 @@ npm run lint
 
 Proprietary – All Rights Reserved
 
-🤝 Contributing
-
-This is a private project. For questions or access requests, please contact the project maintainer.
 
 📧 Support
 
 For technical support or feature requests, please open an issue in the repository.
 
-Built for healthcare compliance professionals
+Built for healthcare compliance professionals.
+
 Developed by Aditya and Sanjana, with special thanks to the Center for Connected Health Policy (CCHP) — https://www.cchpca.org/
