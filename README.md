@@ -45,20 +45,21 @@ TeleCompass is a comprehensive SaaS application that ingests state telehealth po
   - Consent requirements
   - In-person visit rules
 
+## Developer Guide
 
-### Prerequisites
+### 1. Prerequisites
 - Node.js 18+ 
 - PostgreSQL database
 - Ollama installed locally
 
-### 1. Installation
+### 2. Installation
 ```bash
 git clone <repository>
 cd TeleCompass
 npm install
 ```
 
-### 2. Environment Setup
+### 3. Environment Setup
 ```bash
 cp .env.example .env
 ```
@@ -72,22 +73,19 @@ OLLAMA_CHAT_MODEL="mistral:7b-instruct-q4_K_M"
 ALLOW_INGEST="false"
 ```
 
-### 3. Database Setup
+### 4. Database Setup
 ```bash
 npx prisma db push
 npx prisma generate
 ```
 
-### 4. Ollama Setup
+### 5. Ollama Setup
 ```bash
 # Install Ollama from https://ollama.ai
 ollama serve  # Start Ollama server
+```
 
-6. **Open your browser**
-Navigate to [http://localhost:3000](http://localhost:3000)
-
-## 📊 Database Schema
-
+### 6. Database Schema
 ### Core Models
 - **State**: US states/territories
 - **Policy**: Uploaded policy documents
