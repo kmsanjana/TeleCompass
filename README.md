@@ -4,6 +4,19 @@
 
 TeleCompass is a comprehensive SaaS application that ingests state telehealth policy PDFs, extracts structured facts, and provides intelligent search, Q&A, comparison, and dashboard features for healthcare compliance professionals.
 
+
+
+
+## Snapshots
+
+![alt text](image.png)
+
+![alt text](image-1.png)
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
+
 ## 🚀 Features
 
 ### 1. **Policy Finder** (Hybrid Search)
@@ -24,6 +37,7 @@ TeleCompass is a comprehensive SaaS application that ingests state telehealth po
   - Modalities (Live video, Store-and-Forward, RPM, Audio-only)
   - Consent requirements
   - In-person visit rules
+
 
 ### Prerequisites
 - Node.js 18+ 
@@ -74,6 +88,7 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 - **PolicyFact**: Extracted structured facts
 - **Comparison**: Saved comparisons
 - **QueryLog**: Analytics and usage tracking
+
 
 ## 🔌 API Endpoints
 
