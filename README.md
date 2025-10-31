@@ -237,4 +237,4 @@ For technical support or feature requests, please open an issue in the repositor
 
 ---
 
-**Built with ❤️ for healthcare compliance professionals**
+**Built for healthcare compliance professionals**
