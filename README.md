@@ -159,39 +159,6 @@ npm start
 npm run lint
 ```
 
-## 📁 Project Structure
-
-```
-TeleCompass/
-├── app/
-│   ├── api/              # API routes
-│   │   ├── ingest/       # PDF upload & processing
-│   │   ├── search/       # Hybrid search
-│   │   ├── qa/           # RAG Q&A
-│   │   ├── compare/      # Policy comparison
-│   │   └── states/       # State metadata
-│   ├── globals.css       # Global styles
-│   ├── layout.tsx        # Root layout
-│   └── page.tsx          # Home page
-├── components/
-│   ├── features/         # Feature components
-│   │   ├── PolicyFinder.tsx
-│   │   ├── QAInterface.tsx
-│   │   ├── PolicyComparator.tsx
-│   │   ├── Dashboard.tsx
-│   │   └── PDFUploader.tsx
-│   └── ui/               # shadcn/ui components
-├── lib/
-│   ├── db.ts             # Prisma client
-│   ├── openai.ts         # OpenAI utilities
-│   ├── pdf-processor.ts  # PDF parsing & chunking
-│   ├── rag.ts            # RAG & search logic
-│   └── utils.ts          # Helper functions
-├── prisma/
-│   └── schema.prisma     # Database schema
-├── Policy_data_CCHP/     # Source PDFs (50+ states)
-└── package.json
-```
 
 ## 🔐 Security Notes
 
