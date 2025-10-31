@@ -181,18 +181,6 @@ npm start
 npm run lint
 ```
 
-
-## 🔐 Security Notes
-
-- Never commit `.env` files
-- Use environment variables for all secrets
-- Implement authentication before production deployment
-- Rate limit API endpoints
-- Validate and sanitize all user inputs
-- Use HTTPS in production
-
-## 🚧 Roadmap
-
 ### MVP 
 - [x] PDF ingestion pipeline
 - [x] Hybrid search with embeddings
@@ -210,6 +198,7 @@ npm run lint
 - [ ] Multi-tenant support
 - [ ] Mobile responsive improvements
 - [ ] Real-time collaboration features
+
 
 📝 License
 
