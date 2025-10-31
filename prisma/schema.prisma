@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model State {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  abbreviation String  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  policies    Policy[]
+  facts       PolicyFact[]
+}
+
+model Policy {
+  id          String   @id @default(cuid())
+  stateId     String
+  state       State    @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  
+  title       String
+  fileName    String
+  fileSize    Int
+  uploadedAt  DateTime @default(now())
+  processedAt DateTime?
+  status      String   @default("pending") // pending, processing, completed, failed
+  
+  // Metadata
+  effectiveDate DateTime?
+  lastUpdated   DateTime?
+  version       String?
+  
+  chunks      PolicyChunk[]
+  facts       PolicyFact[]
+  
+  @@index([stateId])
+  @@index([status])
+}
+
+model PolicyChunk {
+  id          String   @id @default(cuid())
+  policyId    String
+  policy      Policy   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  
+  content     String   @db.Text
+  pageNumber  Int
+  chunkIndex  Int
+  
+  // Vector embedding (stored as JSON array)
+  embedding   Json?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([policyId])
+  @@index([pageNumber])
+}
+
+model PolicyFact {
+  id          String   @id @default(cuid())
+  policyId    String
+  policy      Policy   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  stateId     String
+  state       State    @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  
+  category    String   // e.g., "modality", "consent", "billing", "provider_eligibility"
+  field       String   // e.g., "live_video", "store_and_forward", "rpm", "audio_only"
+  value       String   @db.Text
+  confidence  Float    @default(0.0)
+  
+  // Citation
+  sourceChunk String?  @db.Text
+  pageNumber  Int?
+  
+  extractedAt DateTime @default(now())
+  
+  @@index([policyId])
+  @@index([stateId])
+  @@index([category])
+  @@index([field])
+}
+
+model Comparison {
+  id          String   @id @default(cuid())
+  userId      String?  // For future auth
+  
+  stateIds    String[] // Array of state IDs being compared
+  categories  String[] // Categories to compare
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+}
+
+model QueryLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  
+  query       String   @db.Text
+  queryType   String   // "search", "qa", "comparison"
+  
+  response    String?  @db.Text
+  confidence  Float?
+  
+  executionTime Int?   // milliseconds
+  createdAt     DateTime @default(now())
+  
+  @@index([userId])
+  @@index([queryType])
+  @@index([createdAt])
+}
