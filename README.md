@@ -171,7 +171,7 @@ npm run lint
 
 ## 🚧 Roadmap
 
-### MVP (2 weeks) ✅
+### MVP 
 - [x] PDF ingestion pipeline
 - [x] Hybrid search with embeddings
 - [x] RAG Q&A with citations
@@ -181,7 +181,6 @@ npm run lint
 ### Future Enhancements
 - [ ] User authentication (NextAuth.js)
 - [ ] Saved searches and comparisons
-- [ ] Email alerts for policy changes
 - [ ] Semantic diff for policy updates
 - [ ] Export to PDF/Excel
 - [ ] Advanced filtering and faceted search
@@ -190,18 +189,17 @@ npm run lint
 - [ ] Mobile responsive improvements
 - [ ] Real-time collaboration features
 
-## 📝 License
+📝 License
 
-Proprietary - All Rights Reserved
+Proprietary – All Rights Reserved
 
-## 🤝 Contributing
+🤝 Contributing
 
 This is a private project. For questions or access requests, please contact the project maintainer.
 
-## 📧 Support
+📧 Support
 
 For technical support or feature requests, please open an issue in the repository.
 
----
-
-**Built with ❤️ for healthcare compliance professionals**
+Built for healthcare compliance professionals
+Developed by Aditya and Sanjana, with special thanks to the Center for Connected Health Policy (CCHP) — https://www.cchpca.org/
