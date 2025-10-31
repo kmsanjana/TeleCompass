@@ -16,6 +16,7 @@
 # Misc
 .DS_Store
 *.pem
+Policy_data_CCHP/
 
 # Debug
 npm-debug.log*
