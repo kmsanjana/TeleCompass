@@ -97,42 +97,6 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 - **QueryLog**: Analytics and usage tracking
 
 
-## 🔌 API Endpoints
-
-### POST `/api/ingest`
-Upload and process a PDF policy document
-```typescript
-FormData: { file: File }
-Response: { success: boolean, policyId: string, stateName: string }
-```
-
-### POST `/api/search`
-Hybrid semantic search
-```typescript
-Body: { query: string, states?: string[], topK?: number }
-Response: { success: boolean, results: SearchResult[] }
-```
-
-### POST `/api/qa`
-RAG-powered Q&A
-```typescript
-Body: { query: string, states?: string[] }
-Response: { success: boolean, answer: string, confidence: number, citations: Citation[] }
-```
-
-### POST `/api/compare`
-Compare policies across states
-```typescript
-Body: { stateNames: string[], categories?: string[] }
-Response: { success: boolean, comparison: ComparisonTable }
-```
-
-### GET `/api/states`
-List all states with metadata
-```typescript
-Response: { success: boolean, states: StateData[] }
-```
-
 ## 🎯 Usage Guide
 
 ### 1. Ingest Policies
