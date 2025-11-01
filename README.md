@@ -8,7 +8,7 @@ TeleCompass is a comprehensive SaaS application that ingests state telehealth po
 
 **Landing Page:**
 
-![alt text](image.png)
+![alt text](image-7.png)
 
 **Search Module:**
 
@@ -24,6 +24,9 @@ TeleCompass is a comprehensive SaaS application that ingests state telehealth po
 
 ![alt text](image-2.png)
 
+**Dashboard Module:**
+
+![alt text](image-8.png)
 
 
 ## 🚀 Features
