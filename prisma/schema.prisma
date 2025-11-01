@@ -99,6 +99,7 @@ model Comparison {
 model QueryLog {
   id          String   @id @default(cuid())
   userId      String?
+  sessionToken String?
   
   query       String   @db.Text
   queryType   String   // "search", "qa", "comparison"
@@ -112,4 +113,17 @@ model QueryLog {
   @@index([userId])
   @@index([queryType])
   @@index([createdAt])
+}
+
+model SearchHistory {
+  id            String   @id @default(cuid())
+  userToken     String
+  query         String   @db.Text
+  states        String   @default("")
+  topK          Int      @default(10)
+  resultsCount  Int
+  executionTime Int?
+  createdAt     DateTime @default(now())
+
+  @@index([userToken, createdAt])
 }

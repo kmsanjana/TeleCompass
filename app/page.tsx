@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import {
   Workflow,
   Sun,
   Moon,
+  Home,
 } from "lucide-react";
 import PolicyFinder from "@/components/features/PolicyFinder";
 import QAInterface from "@/components/features/QAInterface";
@@ -23,12 +24,40 @@ import PolicyComparator from "@/components/features/PolicyComparator";
 import Dashboard from "@/components/features/Dashboard";
 import ManualUpload from "@/components/features/ManualUpload";
 
-export default function Home() {
-  const [activeTab, setActiveTab] = useState("search");
+type TabKey = "search" | "qa" | "compare" | "dashboard";
+
+export default function TeleCompassHome() {
+  const [activeTab, setActiveTab] = useState<TabKey>("search");
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window === "undefined") return "light";
     return document.documentElement.classList.contains("dark") ? "dark" : "light";
   });
+
+  const topRef = useRef<HTMLDivElement>(null);
+  const sectionRefs: Record<TabKey, React.RefObject<HTMLDivElement>> = {
+    search: useRef<HTMLDivElement>(null),
+    qa: useRef<HTMLDivElement>(null),
+    compare: useRef<HTMLDivElement>(null),
+    dashboard: useRef<HTMLDivElement>(null),
+  };
+
+  const scrollToRef = (ref: React.RefObject<HTMLDivElement>) => {
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const handleTabChange = (value: TabKey) => {
+    setActiveTab(value);
+    scrollToRef(sectionRefs[value]);
+  };
+
+  const scrollToTop = () => {
+    if (topRef.current) {
+      topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -40,10 +69,13 @@ export default function Home() {
   }, [theme]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+    <div
+      ref={topRef}
+      className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors"
+    >
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={(value) => handleTabChange(value as TabKey)}
         className="flex min-h-screen flex-col"
       >
         {/* Header */}
@@ -66,6 +98,7 @@ export default function Home() {
               <TabsList className="flex w-full flex-wrap justify-center gap-2 rounded-full bg-rose-100/60 p-1 text-sm shadow-sm dark:bg-slate-800/70">
                 <TabsTrigger
                   value="search"
+                  onClick={() => handleTabChange("search")}
                   className="gap-2 rounded-full px-4 py-2 font-medium text-rose-700 transition-all data-[state=active]:bg-white data-[state=active]:text-rose-700 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-rose-300"
                 >
                   <Search className="w-4 h-4" />
@@ -73,6 +106,7 @@ export default function Home() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="qa"
+                  onClick={() => handleTabChange("qa")}
                   className="gap-2 rounded-full px-4 py-2 font-medium text-rose-700 transition-all data-[state=active]:bg-white data-[state=active]:text-rose-700 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-rose-300"
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -80,6 +114,7 @@ export default function Home() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="compare"
+                  onClick={() => handleTabChange("compare")}
                   className="gap-2 rounded-full px-4 py-2 font-medium text-rose-700 transition-all data-[state=active]:bg-white data-[state=active]:text-rose-700 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-rose-300"
                 >
                   <GitCompare className="w-4 h-4" />
@@ -87,12 +122,22 @@ export default function Home() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="dashboard"
+                  onClick={() => handleTabChange("dashboard")}
                   className="gap-2 rounded-full px-4 py-2 font-medium text-rose-700 transition-all data-[state=active]:bg-white data-[state=active]:text-rose-700 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-rose-300"
                 >
                   <BarChart3 className="w-4 h-4" />
                   <span>Dashboard</span>
                 </TabsTrigger>
               </TabsList>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={scrollToTop}
+                className="self-center rounded-full border-rose-200 text-rose-700 hover:bg-rose-100 dark:border-slate-700 dark:text-rose-200 dark:hover:bg-slate-800"
+                aria-label="Scroll to top"
+              >
+                <Home className="h-5 w-5" />
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -126,7 +171,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
               size="lg"
-              onClick={() => setActiveTab("search")}
+              onClick={() => handleTabChange("search")}
               className="bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md hover:from-rose-500 hover:to-red-500"
             >
               Launch App
@@ -220,21 +265,29 @@ export default function Home() {
         </section>
 
         <TabsContent value="search" className="space-y-4">
+          <div ref={sectionRefs.search} className="scroll-mt-32">
             <PolicyFinder />
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="qa" className="space-y-4">
+        <TabsContent value="qa" className="space-y-4">
+          <div ref={sectionRefs.qa} className="scroll-mt-32">
             <QAInterface />
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="compare" className="space-y-4">
+        <TabsContent value="compare" className="space-y-4">
+          <div ref={sectionRefs.compare} className="scroll-mt-32">
             <PolicyComparator />
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="dashboard" className="space-y-4">
+        <TabsContent value="dashboard" className="space-y-4">
+          <div ref={sectionRefs.dashboard} className="space-y-4 scroll-mt-32">
             {process.env.NEXT_PUBLIC_ENABLE_UPLOAD === "true" ? <ManualUpload /> : null}
             <Dashboard />
-          </TabsContent>
+          </div>
+        </TabsContent>
         </main>
       </Tabs>
 

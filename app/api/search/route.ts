@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { randomUUID } from "crypto";
 import { hybridSearch } from "@/lib/rag";
 import { prisma } from "@/lib/db";
 
@@ -11,6 +13,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 });
     }
     
+    const cookieStore = cookies();
+    let sessionToken = cookieStore.get("telecompass_session")?.value;
+    let shouldSetCookie = false;
+
+    if (!sessionToken) {
+      sessionToken = randomUUID();
+      shouldSetCookie = true;
+    }
+
     const startTime = Date.now();
     
     // Perform hybrid search
@@ -23,11 +34,25 @@ export async function POST(request: NextRequest) {
       data: {
         query,
         queryType: "search",
+        sessionToken,
+        executionTime,
+      },
+    });
+
+    const statesJoined = Array.isArray(states) ? states.join(",") : "";
+
+    await prisma.searchHistory.create({
+      data: {
+        userToken: sessionToken,
+        query,
+        states: statesJoined,
+        topK,
+        resultsCount: results.length,
         executionTime,
       },
     });
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       results: results.map(result => ({
         id: result.chunkId,
@@ -40,6 +65,20 @@ export async function POST(request: NextRequest) {
       })),
       executionTime,
     });
+
+    if (shouldSetCookie && sessionToken) {
+      response.cookies.set({
+        name: "telecompass_session",
+        value: sessionToken,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+      });
+    }
+
+    return response;
   } catch (error) {
     console.error("Error performing search:", error);
     return NextResponse.json(
