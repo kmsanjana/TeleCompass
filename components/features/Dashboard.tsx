@@ -15,6 +15,11 @@ interface StateData {
     title: string;
     uploadedAt: string;
   } | null;
+  coverageScore: number;
+  coverageLevel: "High" | "Medium" | "Low" | "None";
+  avgConfidence: number;
+  categoriesCovered: string[];
+  missingCategories: string[];
 }
 
 interface DashboardStats {
@@ -69,11 +74,17 @@ export default function Dashboard() {
     }
   };
 
-  const getCoverageLevel = (factsCount: number) => {
-    if (factsCount >= 50) return { level: "High", color: "bg-green-100 text-green-800" };
-    if (factsCount >= 20) return { level: "Medium", color: "bg-yellow-100 text-yellow-800" };
-    if (factsCount > 0) return { level: "Low", color: "bg-red-100 text-red-800" };
-    return { level: "None", color: "bg-gray-100 text-gray-800" };
+  const getCoverageStyle = (level: StateData["coverageLevel"]) => {
+    switch (level) {
+      case "High":
+        return { color: "bg-green-100 text-green-800", label: "High" };
+      case "Medium":
+        return { color: "bg-yellow-100 text-yellow-800", label: "Medium" };
+      case "Low":
+        return { color: "bg-orange-100 text-orange-800", label: "Low" };
+      default:
+        return { color: "bg-gray-100 text-gray-800", label: "None" };
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -168,22 +179,29 @@ export default function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {states
-              .sort((a, b) => b.factsCount - a.factsCount)
+              .sort((a, b) => b.coverageScore - a.coverageScore)
               .map((state) => {
-                const coverage = getCoverageLevel(state.factsCount);
+                const coverage = getCoverageStyle(state.coverageLevel);
                 return (
                   <div key={state.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate">{state.name}</p>
                         <Badge className={coverage.color}>
-                          {coverage.level}
+                          {coverage.label}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
                         <span>{state.policiesCount} policies</span>
                         <span>{state.factsCount} facts</span>
+                        <span>{state.coverageScore}% categories covered</span>
+                        <span>{Math.round(state.avgConfidence * 100)}% avg confidence</span>
                       </div>
+                      {state.missingCategories.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Missing: {state.missingCategories.join(", ")}
+                        </p>
+                      )}
                       {state.latestPolicy && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Updated: {formatDate(state.latestPolicy.uploadedAt)}
@@ -206,10 +224,10 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               {[
-                { level: "High Coverage (50+ facts)", count: states.filter(s => s.factsCount >= 50).length, color: "bg-green-500" },
-                { level: "Medium Coverage (20-49 facts)", count: states.filter(s => s.factsCount >= 20 && s.factsCount < 50).length, color: "bg-yellow-500" },
-                { level: "Low Coverage (1-19 facts)", count: states.filter(s => s.factsCount > 0 && s.factsCount < 20).length, color: "bg-red-500" },
-                { level: "No Coverage", count: states.filter(s => s.factsCount === 0).length, color: "bg-gray-500" },
+                { level: "High Coverage", count: states.filter(s => s.coverageLevel === "High").length, color: "bg-green-500" },
+                { level: "Medium Coverage", count: states.filter(s => s.coverageLevel === "Medium").length, color: "bg-yellow-500" },
+                { level: "Low Coverage", count: states.filter(s => s.coverageLevel === "Low").length, color: "bg-orange-500" },
+                { level: "No Coverage", count: states.filter(s => s.coverageLevel === "None").length, color: "bg-gray-500" },
               ].map((item) => (
                 <div key={item.level} className="flex items-center gap-3">
                   <div className={`w-4 h-4 rounded ${item.color}`} />
@@ -230,7 +248,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               {states
-                .sort((a, b) => b.factsCount - a.factsCount)
+                .sort((a, b) => b.coverageScore - a.coverageScore || b.avgConfidence - a.avgConfidence)
                 .slice(0, 5)
                 .map((state, index) => (
                   <div key={state.id} className="flex items-center gap-3">
@@ -240,7 +258,7 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <p className="font-medium">{state.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {state.factsCount} facts extracted
+                        {state.coverageScore}% coverage • {Math.round(state.avgConfidence * 100)}% confidence
                       </p>
                     </div>
                   </div>

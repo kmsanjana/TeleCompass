@@ -23,6 +23,11 @@ export interface RAGResponse {
   suggestedQueries?: string[];
 }
 
+export interface ConversationHistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 const SIMILARITY_THRESHOLD = 0.7;
 const TOP_K_RESULTS = 5;
 
@@ -86,7 +91,8 @@ export async function hybridSearch(
 
 export async function ragQuery(
   query: string,
-  stateFilter?: string[]
+  stateFilter?: string[],
+  history: ConversationHistoryMessage[] = []
 ): Promise<RAGResponse> {
   try {
     // Search for relevant chunks
@@ -131,9 +137,15 @@ Question: ${query}
 
 Provide a clear, cited answer. Use [1], [2], etc. to reference the context sources.`;
 
+    const trimmedHistory = history.slice(-10).map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
+
     const answer = await generateChatCompletion(
       [
         { role: "system", content: systemPrompt },
+        ...trimmedHistory,
         { role: "user", content: userPrompt },
       ],
       {

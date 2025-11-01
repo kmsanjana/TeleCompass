@@ -11,7 +11,12 @@ let fetch;
 
 // Configuration
 const PDF_FOLDER = path.join(__dirname, '..', 'Policy_data_CCHP');
-const API_URL = 'http://localhost:3000/api/ingest';
+const API_ENDPOINTS = [
+  process.env.API_URL,
+  process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/ingest` : null,
+  'http://localhost:3000/api/ingest',
+  'http://localhost:3001/api/ingest',
+].filter(Boolean);
 const DELAY_BETWEEN_UPLOADS = 5000; // 5 seconds
 
 async function sleep(ms) {
@@ -19,39 +24,59 @@ async function sleep(ms) {
 }
 
 async function uploadPDF(filePath, fileName) {
-  try {
-    const formData = new FormData();
-    const fileStream = fs.createReadStream(filePath);
-    formData.append('file', fileStream, fileName);
+  for (const endpoint of API_ENDPOINTS) {
+    try {
+      const formData = new FormData();
+      const fileStream = fs.createReadStream(filePath);
+      formData.append('file', fileStream, fileName);
 
-    console.log(`📤 Uploading: ${fileName}`);
-    
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: formData,
-    });
+      console.log(`📤 Uploading: ${fileName} → ${endpoint}`);
 
-    const result = await response.json();
-    
-    if (result.success) {
-      console.log(`✅ Success: ${fileName}`);
-      console.log(`   Policy ID: ${result.policyId}`);
-      console.log(`   State: ${result.stateName}`);
-      return { success: true, fileName, result };
-    } else {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const text = await response.text();
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch (parseError) {
+        console.log(`❌ Failed to parse response from ${endpoint}: ${parseError}`);
+        continue;
+      }
+
+      if (result.success) {
+        console.log(`✅ Success: ${fileName}`);
+        console.log(`   Policy ID: ${result.policyId}`);
+        console.log(`   State: ${result.stateName}`);
+        return { success: true, fileName, result };
+      }
+
       console.log(`❌ Failed: ${fileName}`);
       console.log(`   Error: ${result.error}`);
       return { success: false, fileName, error: result.error };
+    } catch (error) {
+      console.log(`❌ Error uploading ${fileName} via ${endpoint}: ${error.message}`);
     }
-  } catch (error) {
-    console.log(`❌ Error uploading ${fileName}: ${error.message}`);
-    return { success: false, fileName, error: error.message };
   }
+
+  return {
+    success: false,
+    fileName,
+    error: 'All API endpoints failed. Ensure the dev server is running and ingestion is enabled.',
+  };
 }
 
 async function main() {
   console.log('🚀 TeleCompass Bulk PDF Ingestion');
   console.log('==================================\n');
+
+  console.log('Trying API endpoints in order:');
+  API_ENDPOINTS.forEach((endpoint, index) => {
+    console.log(`  ${index + 1}. ${endpoint}`);
+  });
 
   // Wait for fetch to be loaded
   if (!fetch) {

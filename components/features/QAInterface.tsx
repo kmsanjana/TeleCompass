@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,36 +21,53 @@ interface QAResponse {
   suggestedQueries?: string[];
 }
 
+interface ConversationEntry {
+  question: string;
+  response: QAResponse;
+}
+
 export default function QAInterface() {
   const [question, setQuestion] = useState("");
-  const [response, setResponse] = useState<QAResponse | null>(null);
+  const [conversation, setConversation] = useState<ConversationEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!question.trim()) return;
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion) return;
 
     setLoading(true);
     setError("");
-    setResponse(null);
 
     try {
+      const history = conversation.flatMap((entry) => [
+        { role: "user", content: entry.question },
+        { role: "assistant", content: entry.response.answer },
+      ]);
+
       const res = await fetch("/api/qa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question }),
+        body: JSON.stringify({ query: trimmedQuestion, history }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        setResponse({
-          answer: data.answer,
-          confidence: data.confidence,
-          citations: data.citations,
-          suggestedQueries: data.suggestedQueries,
-        });
+        setConversation((prev) => [
+          ...prev,
+          {
+            question: trimmedQuestion,
+            response: {
+              answer: data.answer,
+              confidence: data.confidence,
+              citations: data.citations ?? [],
+              suggestedQueries: data.suggestedQueries,
+            },
+          },
+        ]);
+        setQuestion("");
       } else {
         setError(data.error || "Failed to get answer");
       }
@@ -72,6 +89,17 @@ export default function QAInterface() {
     if (confidence >= 0.6) return <HelpCircle className="w-3 h-3" />;
     return <HelpCircle className="w-3 h-3" />;
   };
+
+  const hasConversation = conversation.length > 0;
+  const conversationHistory = useMemo(
+    () =>
+      conversation.map((entry, index) => ({
+        ...entry,
+        label: `Exchange ${index + 1}`,
+        isLatest: index === conversation.length - 1,
+      })),
+    [conversation]
+  );
 
   return (
     <div className="space-y-6">
@@ -97,6 +125,19 @@ export default function QAInterface() {
               {loading ? "Thinking..." : "Ask"}
             </Button>
           </form>
+          {hasConversation && (
+            <div className="mt-2 flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setConversation([])}
+                disabled={loading}
+              >
+                Clear conversation
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -108,88 +149,98 @@ export default function QAInterface() {
         </Card>
       )}
 
-      {response && (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5" />
-                  Answer
-                </CardTitle>
-                <Badge className={`${getConfidenceColor(response.confidence)} flex items-center gap-1`}>
-                  {getConfidenceIcon(response.confidence)}
-                  {Math.round(response.confidence * 100)}% confidence
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {response.answer}
-              </p>
-            </CardContent>
-          </Card>
+      {hasConversation && (
+        <div className="space-y-6">
+          {conversationHistory.map(({ question: q, response: answer, label, isLatest }, idx) => (
+            <div key={idx} className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    {label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{q}</p>
+                </CardContent>
+              </Card>
 
-          {response.citations.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Quote className="w-5 h-5" />
-                  Citations ({response.citations.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {response.citations.map((citation, index) => (
-                    <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <span className="font-medium">[{index + 1}]</span>
-                        <span>{citation.stateName}</span>
-                        <span>•</span>
-                        <span>Page {citation.pageNumber}</span>
-                      </div>
-                      <p className="text-sm leading-relaxed">
-                        {citation.content.substring(0, 200)}...
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {citation.policyTitle}
-                      </p>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5" />
+                      Answer
+                    </CardTitle>
+                    <Badge className={`${getConfidenceColor(answer.confidence)} flex items-center gap-1`}>
+                      {getConfidenceIcon(answer.confidence)}
+                      {Math.round(answer.confidence * 100)}% confidence
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{answer.answer}</p>
+                </CardContent>
+              </Card>
+
+              {answer.citations.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Quote className="w-5 h-5" />
+                      Citations ({answer.citations.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {answer.citations.map((citation, index) => (
+                        <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                            <span className="font-medium">[{index + 1}]</span>
+                            <span>{citation.stateName}</span>
+                            <span>•</span>
+                            <span>Page {citation.pageNumber}</span>
+                          </div>
+                          <p className="text-sm leading-relaxed">{citation.content.substring(0, 200)}...</p>
+                          <p className="text-xs text-muted-foreground mt-1">{citation.policyTitle}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  </CardContent>
+                </Card>
+              )}
 
-          {response.suggestedQueries && response.suggestedQueries.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5" />
-                  Suggested Questions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {response.suggestedQueries.map((query, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      size="sm"
-                      className="h-auto p-3 text-left justify-start"
-                      onClick={() => setQuestion(query)}
-                    >
-                      {query}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              {isLatest && answer.suggestedQueries && answer.suggestedQueries.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <HelpCircle className="w-5 h-5" />
+                      Suggested Questions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {answer.suggestedQueries.map((suggestion, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          className="h-auto p-3 text-left justify-start"
+                          onClick={() => setQuestion(suggestion)}
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
-      {!loading && !error && !response && question && (
+      {!loading && !error && !hasConversation && !question && (
         <Card>
           <CardContent className="pt-6 text-center text-muted-foreground">
             <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />

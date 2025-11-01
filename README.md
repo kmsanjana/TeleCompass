@@ -18,6 +18,8 @@ TeleCompass is a comprehensive SaaS application that ingests state telehealth po
 
 ![alt text](image-4.png)
 
+![alt text](image-6.png)
+
 **Comparison Module:**
 
 ![alt text](image-2.png)
@@ -71,6 +73,8 @@ OLLAMA_HOST="http://localhost:11434"
 OLLAMA_EMBED_MODEL="nomic-embed-text:latest"
 OLLAMA_CHAT_MODEL="mistral:7b-instruct-q4_K_M"
 ALLOW_INGEST="false"
+ALLOW_UPLOAD="false"
+NEXT_PUBLIC_ENABLE_UPLOAD="false"
 ```
 
 ### 4. Database Setup
@@ -98,9 +102,10 @@ ollama serve  # Start Ollama server
 ## 🎯 Usage Guide
 
 ### 1. Ingest Policies
-- Click "Upload PDF" in the header
-- Select a state telehealth policy PDF
-- Wait for background processing (embeddings + fact extraction)
+- Toggle uploads on by setting `ALLOW_UPLOAD="true"`, `ALLOW_INGEST="true"`, and `NEXT_PUBLIC_ENABLE_UPLOAD="true"` in `.env`, then restart `npm run dev`.
+- Make sure `ollama serve` is running before you upload.
+- Open the Dashboard tab and use the "Upload Policy PDF" card to select a telehealth policy PDF.
+- After the success message, allow ~1 minute for background processing (embeddings + fact extraction) before refreshing the dashboard.
 
 ### 2. Search Policies
 - Navigate to "Search" tab
@@ -124,6 +129,7 @@ ollama serve  # Start Ollama server
 - Monitor coverage statistics
 - Identify compliance risks
 - Track processing status
+- Uploaded PDFs are saved under `storage/uploads/` (ignored by Git); rerun uploads anytime to refresh facts.
 
 ## 🧪 Development
 

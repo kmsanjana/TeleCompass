@@ -17,6 +17,7 @@
 .DS_Store
 *.pem
 Policy_data_CCHP/
+storage/
 
 # Debug
 npm-debug.log*

@@ -21,6 +21,7 @@ import PolicyFinder from "@/components/features/PolicyFinder";
 import QAInterface from "@/components/features/QAInterface";
 import PolicyComparator from "@/components/features/PolicyComparator";
 import Dashboard from "@/components/features/Dashboard";
+import ManualUpload from "@/components/features/ManualUpload";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("search");
@@ -144,10 +145,10 @@ export default function Home() {
           </div>
           <div className="grid gap-4 pt-4 sm:grid-cols-3">
             <div className="rounded-lg border border-rose-100 bg-white/70 px-5 py-4 text-sm text-rose-900 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-rose-200">
-              <span className="font-semibold">53</span> state telehealth policies processed in minutes
+              <span className="font-semibold">51</span> state telehealth policies processed in minutes
             </div>
             <div className="rounded-lg border border-rose-100 bg-white/70 px-5 py-4 text-sm text-rose-900 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-rose-200">
-              <span className="font-semibold">284+</span> structured facts surfaced for instant comparisons
+              <span className="font-semibold">300+</span> structured facts surfaced for instant comparisons
             </div>
             <div className="rounded-lg border border-rose-100 bg-white/70 px-5 py-4 text-sm text-rose-900 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-rose-200">
               <span className="font-semibold">100%</span> local AI pipeline via Ollama—no external APIs
@@ -231,6 +232,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-4">
+            {process.env.NEXT_PUBLIC_ENABLE_UPLOAD === "true" ? <ManualUpload /> : null}
             <Dashboard />
           </TabsContent>
         </main>

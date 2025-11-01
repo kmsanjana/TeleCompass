@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { processPDF, embedChunks, extractStateName } from "@/lib/pdf-processor";
-import { extractPolicyFacts } from "@/lib/rag";
+import { extractStateName } from "@/lib/pdf-processor";
+import { queuePolicyProcessing } from "@/lib/ingest-runner";
 
 export const runtime = "nodejs";
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     });
     
     // Process PDF in background (in production, use a queue)
-    processPDFAsync(policy.id, buffer);
+    queuePolicyProcessing(policy.id, buffer);
     
     return NextResponse.json({
       success: true,
@@ -74,56 +74,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processPDFAsync(policyId: string, buffer: Buffer) {
-  try {
-    console.log(`🔄 Starting processing for policy ${policyId}`);
-    
-    // Process PDF
-    console.log(`📄 Extracting text from PDF...`);
-    const processed = await processPDF(buffer);
-    console.log(`✅ Extracted ${processed.chunks.length} chunks`);
-    
-    // Generate embeddings
-    console.log(`🧠 Generating embeddings...`);
-    const chunksWithEmbeddings = await embedChunks(processed.chunks);
-    console.log(`✅ Generated ${chunksWithEmbeddings.length} embeddings`);
-    
-    // Store chunks in database
-    console.log(`💾 Storing chunks in database...`);
-    await prisma.policyChunk.createMany({
-      data: chunksWithEmbeddings.map((chunk) => ({
-        policyId,
-        content: chunk.content,
-        pageNumber: chunk.pageNumber,
-        chunkIndex: chunk.chunkIndex,
-        embedding: chunk.embedding,
-      })),
-    });
-    console.log(`✅ Stored ${chunksWithEmbeddings.length} chunks`);
-    
-    // Extract structured facts
-    console.log(`🔍 Extracting policy facts...`);
-    await extractPolicyFacts(policyId);
-    console.log(`✅ Facts extracted`);
-    
-    // Update policy status
-    await prisma.policy.update({
-      where: { id: policyId },
-      data: {
-        status: "completed",
-        processedAt: new Date(),
-      },
-    });
-    
-    console.log(`🎉 Successfully processed policy ${policyId}`);
-  } catch (error) {
-    console.error(`❌ Error processing policy ${policyId}:`, error);
-    console.error(`❌ Error details:`, error instanceof Error ? error.message : String(error));
-    console.error(`❌ Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
-    
-    await prisma.policy.update({
-      where: { id: policyId },
-      data: { status: "failed" },
-    });
-  }
-}
